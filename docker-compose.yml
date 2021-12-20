@@ -15,15 +15,17 @@ services:
     image: 'php-apache-server'
     container_name: "php7.4-apache-server"
     volumes:
-      - .:/var/www/hcode
+      - .:/var/www/graphql
     ports:
       - "8088:80"
     restart: always
 
   mysql-db:
     image: mysql:8.0
+    container_name: "mysql-db-container"
     volumes:
-      - ./docker/db:/var/lib/mysql
+      - ./docker/db/data:/var/lib/mysql
+      - ./docker/db/scripts:/docker-entrypoint-initdb.d
     ports:
       - "3359:3306"
     environment:

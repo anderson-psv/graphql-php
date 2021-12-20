@@ -1,5 +1,16 @@
 FROM php:7.4-apache
-RUN docker-php-ext-install mysqli pdo pdo_mysql && mkdir -p /var/www/hcode
+
+RUN apt-get update && apt-get install -y \
+    zlib1g-dev \
+    libzip-dev \
+    unzip
+
+RUN docker-php-ext-install \
+    mysqli \
+    pdo \
+    pdo_mysql \
+    zip \
+    && mkdir -p /var/www/graphql
 
 COPY --from=composer /usr/bin/composer /usr/bin/composer
 #COPY ./hcode_ecommerce.com.conf /etc/apache2/sites-available/hcode_ecommerce.com.conf
