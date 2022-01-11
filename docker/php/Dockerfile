@@ -10,10 +10,15 @@ RUN docker-php-ext-install \
     pdo \
     pdo_mysql \
     zip \
-    && mkdir -p /var/www/graphql
+    && mkdir -p /var/www/graphql \
+    && chmod -R 775 /var/www/graphql
 
+#Realiza a copia do conf que define a pasta root do apache como /var/www/graphql
+COPY ./conf /etc/apache2/sites-available
+
+#Realiza a copia do composer, e conforme configurado no container do mesmo, executa no repositorio
 COPY --from=composer /usr/bin/composer /usr/bin/composer
-#COPY ./hcode_ecommerce.com.conf /etc/apache2/sites-available/hcode_ecommerce.com.conf
 
-#RUN a2enmod rewrite
+RUN a2enmod rewrite
 #RUN a2dissite 000-default.conf && a2ensite hcode_ecommerce.com.conf && /etc/init.d/apache2 restart
+EXPOSE 80

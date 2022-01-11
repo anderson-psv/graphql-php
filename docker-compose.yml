@@ -4,7 +4,7 @@ services:
     image: composer
     container_name: composer.php
     ports:
-      - "9001:9000"
+      - 9001:9000
     volumes:
       - .:/composer
     working_dir: /composer
@@ -16,8 +16,9 @@ services:
     container_name: "php7.4-apache-server"
     volumes:
       - .:/var/www/graphql
+    working_dir: /var/www/graphql
     ports:
-      - "8088:80"
+      - 8088:80
     restart: always
 
   mysql-db:
