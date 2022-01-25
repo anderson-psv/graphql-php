@@ -1,21 +1,24 @@
 <?php
 
+use App\graphql\TypeRegistry;
+use GraphQL\Error\DebugFlag;
+use GraphQL\GraphQL;
+use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Schema;
+
 require('vendor/autoload.php');
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE');
 header('Access-Control-Allow-Headers: Content-Type, Access-Control-Alow-Headers, X-Requested-With');
 
-use App\graphql\RootQuery;
-use GraphQL\GraphQL;
-use GraphQL\Type\Schema;
-use GraphQL\Error\DebugFlag;
-
 try {
-    $debug = DebugFlag::INCLUDE_DEBUG_MESSAGE | DebugFlag::INCLUDE_TRACE;
+    $debug        = DebugFlag::INCLUDE_DEBUG_MESSAGE | DebugFlag::INCLUDE_TRACE;
+    $typeRegistry = new TypeRegistry();
 
     $schema = new Schema([
-        'query' => new RootQuery()
+        'query'      => $typeRegistry->get('Query'),
+        'typeLoader' => static fn (string $name): Type => $typeRegistry->get($name),
     ]);
 
     $rawInput = file_get_contents('php://input');
