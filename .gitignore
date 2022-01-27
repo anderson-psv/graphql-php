@@ -1,3 +1,4 @@
+composer.lock
 docker/db/data
 vendor
 launch.json
