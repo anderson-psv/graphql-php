@@ -27,96 +27,32 @@ class TypeRegistry
         $this->db = Sql::Db();
     }
 
+    public function getDb() {
+        return $this->db;
+    }
+
     public function get(string $name): Type
     {
         /**
-         * Mantem a instancia do Object Type salva em um array para reutilização,
-         * e previne erro de objeto com mesmo nome duplicado
+         * This way, keeps a single instance of ObjectType unique name
          */
         return $this->types[$name] ??= $this->{$name}();
     }
 
     private function Query(): ObjectType
     {
+        //Load query's from model's if function exists
+        $fields_query = [];
+        foreach (glob('./app/Model/*.php') as $file) {
+            $class = "\\App\\Model\\".basename($file, '.php');
+            if(method_exists($class, 'getQueryes')) {
+               $fields_query = array_merge($fields_query, $class::getQueryes($this));
+            }
+        }
+
         return new ObjectType([
             'name'   => 'Query',
-            'fields' => fn () => [
-                'produtos' => [
-                    'type'    => Type::listOf($this->get('Produto')),
-                    'resolve' => function ($rootValue, $args) {
-                        $qb = new QueryBuilder($this->db);
-
-                        return $qb->select('*')
-                            ->from(Produto::$tabela)
-                            ->fetchAllAssociative();
-                    }
-                ],
-                'produto' => [
-                    'type' => $this->get('Produto'),
-                    'args' => [
-                        'idproduto' => Type::nonNull(Type::int())
-                    ],
-                    'resolve' => function ($rootValue, $args) {
-                        $qb = new QueryBuilder($this->db);
-
-                        return $qb->select('*')
-                            ->from(Produto::$tabela)
-                            ->where('idproduto = :id')
-                            ->setParameter('id', $args['idproduto'])
-                            ->fetchAssociative();
-                    }
-                ],
-                'categorias' => [
-                    'type'    => Type::listOf($this->get('Categoria')),
-                    'resolve' => function ($rootValue, $args) {
-                        $qb = new QueryBuilder($this->db);
-
-                        return $qb->select('*')
-                            ->from(Categoria::$tabela)
-                            ->fetchAllAssociative();
-                    }
-                ],
-                'categoria' => [
-                    'type' => $this->get('Categoria'),
-                    'args' => [
-                        'idcategoria' => Type::nonNull(Type::int())
-                    ],
-                    'resolve' => function ($rootValue, $args) {
-                        $qb = new QueryBuilder($this->db);
-
-                        return $qb->select('*')
-                            ->from(Categoria::$tabela)
-                            ->where('idcategoria = :id')
-                            ->setParameter('id', $args['idcategoria'])
-                            ->fetchAssociative();
-                    }
-                ],
-                'pedidos' => [
-                    'type'    => Type::listOf($this->get('Pedido')),
-                    'resolve' => function ($rootValue, $args) {
-                        $qb = new QueryBuilder($this->db);
-
-                        return $qb->select('*')
-                            ->from(Pedido::$tabela)
-                            ->fetchAllAssociative();
-                    }
-                ],
-                'pedido' => [
-                    'type' => $this->get('Pedido'),
-                    'args' => [
-                        'idpedido' => Type::nonNull(Type::int())
-                    ],
-                    'resolve' => function ($rootValue, $args) {
-                        $qb = new QueryBuilder($this->db);
-
-                        return $qb->select('*')
-                            ->from(Pedido::$tabela)
-                            ->where(Pedido::$id . ' = :id')
-                            ->setParameter('id', $args['idpedido'])
-                            ->fetchAssociative();
-                    }
-                ],
-            ]
+            'fields' => fn () => $fields_query
         ]);
     }
 
@@ -136,7 +72,7 @@ class TypeRegistry
                         $qb = new QueryBuilder($this->db);
 
                         $categoria = $qb->select('*')
-                            ->from(Categoria::$tabela)
+                            ->from(Categoria::$table)
                             ->where(Categoria::$id . ' = :id')
                             ->setParameter('id', $produto['idcategoria'])
                             ->fetchAssociative();
@@ -163,7 +99,7 @@ class TypeRegistry
                         $qb = new QueryBuilder($this->db);
 
                         return $qb->select('*')
-                            ->from(Produto::$tabela)
+                            ->from(Produto::$table)
                             ->where(Produto::$id . ' = :id')
                             ->setParameter('id', $categoria['idcategoria'])
                             ->fetchAllAssociative();
@@ -187,7 +123,7 @@ class TypeRegistry
                         $qb = new QueryBuilder($this->db);
 
                         return $qb->select('*')
-                            ->from(PedidoItem::$tabela)
+                            ->from(PedidoItem::$table)
                             ->where(Pedido::$id . ' = :id')
                             ->setParameter('id', $pedido['idpedido'])
                             ->fetchAllAssociative();
@@ -213,7 +149,7 @@ class TypeRegistry
                         $qb = new QueryBuilder($this->db);
 
                         return $qb->select('*')
-                            ->from(Produto::$tabela)
+                            ->from(Produto::$table)
                             ->where(Produto::$id . ' = :id')
                             ->setParameter('id', $pedido['idproduto'])
                             ->fetchAllAssociative();
