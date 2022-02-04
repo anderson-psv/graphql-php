@@ -72,7 +72,7 @@ class PedidoItem implements iModel
 
     public function setValor(int $valor)
     {
-        if($valor < 0) {
+        if ($valor < 0) {
             throw new Exception("Valor não pode ser negativo!");
         }
         $this->valor = $valor;
@@ -92,16 +92,46 @@ class PedidoItem implements iModel
         }
     }
 
-    public function getData(int $id)
+    /**
+     * Carrega os dados do item de pedido, do banco de dados
+     *
+     * @param integer $iditem
+     * @return array
+     * @throws Exception
+     */
+    public function getPedidoItemDb(int $iditem)
     {
-        $qb = new QueryBuilder($this->db);
+        try {
+            $qb = new QueryBuilder($this->db);
 
-        $qb->select(implode(',', self::$db_fields))
-            ->from(self::$table)
-            ->where("iditem = :iditem")
-            ->setParameter('iditem', $id);
+            $qb->select(implode(',', self::$db_fields))
+                ->from(self::$table)
+                ->where("iditem = :iditem")
+                ->setParameter('iditem', $iditem);
 
-        return $qb->fetchAssociative();
+            $data = $qb->fetchAssociative();
+        } catch (\Throwable $th) {
+            throw new Exception("Erro ao solicitar item de pedido no banco de dados!");
+        }
+
+        $this->setData($data);
+
+        return $data;
+    }
+
+    /**
+     * Retorna os dados da instancia em formato de array
+     *
+     * @return array
+     */
+    public function asArray()
+    {
+        $data = [];
+        foreach (self::$db_fields as $field) {
+            $data[$field] = $this->$field;
+        }
+
+        return $data;
     }
 
     public function save()
@@ -143,6 +173,35 @@ class PedidoItem implements iModel
         return false;
     }
 
+    /**
+     * Deletar item de pedido do banco de dados
+     *
+     * @return bool
+     * @throws Exception
+     */
+    public function delete()
+    {
+        if (empty($this->iditem)) {
+            throw new Exception("ID item inválido!");
+        }
+
+        try {
+            $qb = new QueryBuilder($this->db);
+
+            $qb->delete(self::$table)
+                ->where('iditem = :iditem')
+                ->setParameter('iditem', $this->iditem);
+
+            if ($qb->executeQuery()) {
+                return true;
+            }
+        } catch (\Throwable $th) {
+            throw new Exception("Erro ao deletar item de pedido!");
+        }
+
+        return false;
+    }
+
     static public function getQueryes(TypeRegistry $type_reg)
     {
         return [
@@ -162,7 +221,7 @@ class PedidoItem implements iModel
                     'iditem' => Type::nonNull(Type::int())
                 ],
                 'resolve' => function ($rootValue, $args) use ($type_reg) {
-                    return (new PedidoItem())->getData($args['iditem']);
+                    return (new PedidoItem())->getPedidoItemDb($args['iditem']);
                 }
             ],
         ];
