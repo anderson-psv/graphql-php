@@ -92,16 +92,39 @@ class Produto implements iModel
         }
     }
 
-    public function getData(int $id)
+    /**
+     * Retorna os dados da instancia em formato de array
+     *
+     * @return array
+     */
+    public function asArray()
     {
-        $qb = new QueryBuilder($this->db);
+        $data = [];
+        foreach (self::$db_fields as $field) {
+            $data[$field] = $this->$field;
+        }
 
-        $qb->select(implode(',', self::$db_fields))
-            ->from(self::$table)
-            ->where("idproduto = :idproduto")
-            ->setParameter('idproduto', $id);
+        return $data;
+    }
 
-        return $qb->fetchAssociative();
+    public function getProdutoDb(int $idproduto)
+    {
+        try {
+            $qb = new QueryBuilder($this->db);
+
+            $data = $qb->select(implode(',', self::$db_fields))
+                ->from(self::$table)
+                ->where("idproduto = :idproduto")
+                ->setParameter('idproduto', $idproduto);
+
+            $data = $qb->fetchAssociative();
+        } catch (\Throwable $th) {
+            throw new Exception("Erro ao solicitar produto do banco de dados!");
+        }
+
+        $this->setData($data);
+
+        return $qb;
     }
 
     public function save()
@@ -138,6 +161,35 @@ class Produto implements iModel
                 $this->setIdproduto = $result['idproduto'];
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    /**
+     * Deletar produto do banco de dados
+     *
+     * @return bool
+     * @throws Exception
+     */
+    public function delete()
+    {
+        if (empty($this->idproduto)) {
+            throw new Exception("ID produto inválido!");
+        }
+
+        try {
+            $qb = new QueryBuilder($this->db);
+
+            $qb->delete(self::$table)
+                ->where('idproduto = :idproduto')
+                ->setParameter('idproduto', $this->idproduto);
+
+            if ($qb->executeQuery()) {
+                return true;
+            }
+        } catch (\Throwable $th) {
+            throw new Exception("Erro ao deletar produto!");
         }
 
         return false;
