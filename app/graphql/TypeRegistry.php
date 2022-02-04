@@ -27,7 +27,8 @@ class TypeRegistry
         $this->db = Sql::Db();
     }
 
-    public function getDb() {
+    public function getDb()
+    {
         return $this->db;
     }
 
@@ -44,9 +45,9 @@ class TypeRegistry
         //Load query's from model's if function exists
         $fields_query = [];
         foreach (glob('./app/Model/*.php') as $file) {
-            $class = "\\App\\Model\\".basename($file, '.php');
-            if(method_exists($class, 'getQueryes')) {
-               $fields_query = array_merge($fields_query, $class::getQueryes($this));
+            $class = "\\App\\Model\\" . basename($file, '.php');
+            if (method_exists($class, 'getQueryes')) {
+                $fields_query = array_merge($fields_query, $class::getQueryes($this));
             }
         }
 
@@ -115,8 +116,8 @@ class TypeRegistry
             'name'        => 'Pedido',
             'description' => 'Pedido',
             'fields'      => fn ()    => [
-                'idpedido' => Type::int() ,
-                'status'   => Type::string() ,
+                'idpedido' => Type::int(),
+                'status'   => Type::string(),
                 'itens'    => fn ()          => [
                     'type'    => Type::listOf($this->get('PedidoItem')),
                     'resolve' => function ($pedido, $args) {
@@ -136,12 +137,12 @@ class TypeRegistry
     private function PedidoItem(): ObjectType
     {
         return new ObjectType([
-            'name'        => 'PedidoItem' ,
-            'description' => 'Item de Pedido' ,
+            'name'        => 'PedidoItem',
+            'description' => 'Item de Pedido',
             'fields'      => fn ()            => [
-                'iditem'    => Type::int() ,
-                'idproduto' => Type::int() ,
-                'idpedido'  => Type::int() ,
+                'iditem'    => Type::int(),
+                'idproduto' => Type::int(),
+                'idpedido'  => Type::int(),
                 'valor'     => Type::float(),
                 'produto'     => fn ()          => [
                     'type'    => Type::listOf($this->get('Produto')),
