@@ -65,16 +65,46 @@ class Pedido implements iModel
         }
     }
 
-    public function getData(int $id)
+    /**
+     * Retorna os dados da instancia em formato de array
+     *
+     * @return array
+     */
+    public function asArray()
     {
-        $qb = new QueryBuilder($this->db);
+        $data = [];
+        foreach (self::$db_fields as $field) {
+            $data[$field] = $this->$field;
+        }
 
-        $qb->select(implode(',', self::$db_fields))
-            ->from(self::$table)
-            ->where("idpedido = :idpedido")
-            ->setParameter('idpedido', $id);
+        return $data;
+    }
 
-        return $qb->fetchAssociative();
+    /**
+     * Carrega os dados do pedido do banco de dados
+     *
+     * @param integer $idpedido
+     * @return array
+     * @throws Exception
+     */
+    public function getPedidoDb(int $idpedido)
+    {
+        try {
+            $qb = new QueryBuilder($this->db);
+
+            $qb->select(implode(',', self::$db_fields))
+                ->from(self::$table)
+                ->where("idpedido = :idpedido")
+                ->setParameter('idpedido', $idpedido);
+
+            $data = $qb->fetchAssociative();
+        } catch (\Throwable $th) {
+            throw new Exception("Erro ao solicitar pedido no banco de dados!");
+        }
+
+        $this->setData($data);
+
+        return $data;
     }
 
     public function save()
@@ -116,6 +146,35 @@ class Pedido implements iModel
         return false;
     }
 
+    /**
+     * Deletar pedido do banco de dados
+     *
+     * @return bool
+     * @throws Exception
+     */
+    public function delete()
+    {
+        if (empty($this->idpedido)) {
+            throw new Exception("ID pedido inválido!");
+        }
+
+        try {
+            $qb = new QueryBuilder($this->db);
+
+            $qb->delete(self::$table)
+                ->where('idpedido = :idpedido')
+                ->setParameter('idpedido', $this->idpedido);
+
+            if ($qb->executeQuery()) {
+                return true;
+            }
+        } catch (\Throwable $th) {
+            throw new Exception("Erro ao deletar pedido!");
+        }
+
+        return false;
+    }
+
     static public function getQueryes(TypeRegistry $type_reg)
     {
         return [
@@ -135,7 +194,7 @@ class Pedido implements iModel
                     'idpedido' => Type::nonNull(Type::int())
                 ],
                 'resolve' => function ($rootValue, $args) use ($type_reg) {
-                    return (new Pedido())->getData($args['idpedido']);
+                    return (new Pedido())->getPedidoDb($args['idpedido']);
                 }
             ],
         ];
