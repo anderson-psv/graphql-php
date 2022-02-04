@@ -93,7 +93,7 @@ class Categoria implements iModel
      *
      * @return array
      */
-    public function getData()
+    public function asArray()
     {
         $data = [];
         foreach (self::$db_fields as $field) {

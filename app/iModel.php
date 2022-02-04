@@ -5,7 +5,7 @@ namespace App;
 interface iModel
 {
     public function setData(array $data);
-    public function getData();
+    public function asArray();
     public function save();
     public function delete();
 }
