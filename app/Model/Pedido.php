@@ -3,12 +3,12 @@
 namespace App\Model;
 
 use Exception;
-use App\iModel;
 use App\Db\Sql;
+use App\iModel;
 use App\graphql\TypeRegistry;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Query\QueryBuilder;
 use GraphQL\Type\Definition\Type;
+use Doctrine\DBAL\Query\QueryBuilder;
 
 class Pedido implements iModel
 {
