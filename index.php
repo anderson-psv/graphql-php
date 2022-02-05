@@ -1,10 +1,10 @@
 <?php
 
-use App\graphql\TypeRegistry;
-use GraphQL\Error\DebugFlag;
 use GraphQL\GraphQL;
-use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
+use GraphQL\Error\DebugFlag;
+use App\graphql\TypeRegistry;
+use GraphQL\Type\Definition\Type;
 
 require('vendor/autoload.php');
 
