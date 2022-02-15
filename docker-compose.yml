@@ -11,7 +11,7 @@ services:
     command: bash -c "chmod -R 777 . && composer install && composer dump-autoload"
 
   php:
-    build: ./docker/php
+    build: ./docker/build/php
     image: 'php-apache-server'
     container_name: "php7.4-apache-server"
     volumes:
@@ -26,9 +26,9 @@ services:
     container_name: "mysql-db-container"
     volumes:
       #Local dos arquivos/dados do banco de dados
-      - ./docker/db/data:/var/lib/mysql 
+      - ./docker/data/db:/var/lib/mysql 
       #Pasta com script onde executa o script de criação do banco
-      - ./docker/db/script:/docker-entrypoint-initdb.d
+      - ./docker/build/scripts/db:/docker-entrypoint-initdb.d
     ports:
       - "3359:3306"
     environment:
