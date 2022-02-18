@@ -204,6 +204,7 @@ class PedidoItem implements iModel
 
     static public function getQueryes(TypeRegistry $type_reg)
     {
+        return [];
         return [
             'itens' => [
                 'type'    => Type::listOf($type_reg->get('PedidoItem')),

@@ -199,9 +199,8 @@ class Produto implements iModel
     {
         return [
             'produtos' => [
-                'type'    => Type::listOf($type_reg->get('Produto')),
-                'resolve' => function ($rootValue, $args) use ($type_reg) {
-                    $qb = new QueryBuilder($type_reg->getDb());
+                'resolve' => function ($rootValue, $args) {
+                    $qb = new QueryBuilder(Sql::Db());
 
                     return $qb->select(Produto::$db_fields)
                         ->from(Produto::$table)
@@ -209,12 +208,8 @@ class Produto implements iModel
                 }
             ],
             'produto' => [
-                'type' => $type_reg->get('Produto'),
-                'args' => [
-                    'idproduto' => Type::nonNull(Type::int())
-                ],
-                'resolve' => function ($rootValue, $args) use ($type_reg) {
-                    $qb = new QueryBuilder($type_reg->getDb());
+                'resolve' => function ($rootValue, $args) {
+                    $qb = new QueryBuilder(Sql::Db());
 
                     return $qb->select(Produto::$db_fields)
                         ->from(Produto::$table)

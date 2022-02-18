@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\graphql;
 
 use App\Db\Sql;
-use App\Model\Categoria;
 use App\Model\Pedido;
-use App\Model\PedidoItem;
 use App\Model\Produto;
+use App\Model\Categoria;
+use App\Model\PedidoItem;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Query\QueryBuilder;
 use GraphQL\Type\Definition\Type;
+use Doctrine\DBAL\Query\QueryBuilder;
 use GraphQL\Type\Definition\ObjectType;
 
 class TypeRegistry
@@ -21,6 +21,7 @@ class TypeRegistry
      */
     private array $types = [];
     private Connection $db;
+    private array $graphl_types = [];
 
     public function __construct()
     {
@@ -32,15 +33,16 @@ class TypeRegistry
         return $this->db;
     }
 
-    public function get(string $name): Type
+    public function get(string $name, $all_types = [])
     {
+        $this->graphl_types ??= $all_types;
         /**
          * This way, keeps a single instance of ObjectType unique name
          */
         return $this->types[$name] ??= $this->{$name}();
     }
 
-    private function Query(): ObjectType
+    private function Query(): array
     {
         //Load query's from model's if function exists
         $fields_query = [];
@@ -51,14 +53,45 @@ class TypeRegistry
             }
         }
 
+        return $fields_query;
+    }
+
+    private function Mutations(): ObjectType
+    {
+        //Load mutation's from model's if function exists
+        $fields_mutation = [];
+        foreach (glob('./app/Model/*.php') as $file) {
+            $class = "\\App\\Model\\" . basename($file, '.php');
+            if (method_exists($class, 'getMutations')) {
+                $fields_mutation = array_merge($fields_mutation, $class::getMutations($this));
+            }
+        }
+
         return new ObjectType([
-            'name'   => 'Query',
-            'fields' => fn () => $fields_query
+            'name'   => 'Mutation',
+            'fields' => fn () => []
         ]);
     }
 
-    private function Produto(): ObjectType
+    private function Produto()
     {
+        return [
+            'categoria'   => [
+                'resolve' => function ($produto, $args) {
+                    $qb = new QueryBuilder(Sql::Db());
+
+                    $categoria = $qb->select('*')
+                        ->from(Categoria::$table)
+                        ->where(Categoria::$id . ' = :id')
+                        ->setParameter('id', $produto['idcategoria'])
+                        ->fetchAssociative();
+
+                    return $categoria;
+                }
+            ]
+        ];
+
+        /*
         return new ObjectType([
             'name'        => 'Produto',
             'description' => 'Type Produto',
@@ -83,10 +116,26 @@ class TypeRegistry
                 ]
             ]
         ]);
+        */
     }
 
-    private function Categoria(): ObjectType
+    private function Categoria()
     {
+        return [
+            'produtos' => fn () => [
+                'resolve' => function ($categoria, $args) {
+                    $qb = new QueryBuilder($this->db);
+
+                    return $qb->select('*')
+                        ->from(Produto::$table)
+                        ->where(Produto::$id . ' = :id')
+                        ->setParameter('id', $categoria['idcategoria'])
+                        ->fetchAllAssociative();
+                }
+            ]
+        ];
+
+        /*
         return new ObjectType([
             'name'        => 'Categoria',
             'description' => 'Categoria de produto',
@@ -108,6 +157,7 @@ class TypeRegistry
                 ]
             ]
         ]);
+        */
     }
 
     private function Pedido(): ObjectType
@@ -139,12 +189,12 @@ class TypeRegistry
         return new ObjectType([
             'name'        => 'PedidoItem',
             'description' => 'Item de Pedido',
-            'fields'      => fn ()            => [
+            'fields'      => fn () => [
                 'iditem'    => Type::int(),
                 'idproduto' => Type::int(),
                 'idpedido'  => Type::int(),
                 'valor'     => Type::float(),
-                'produto'     => fn ()          => [
+                'produto'     => fn () => [
                     'type'    => Type::listOf($this->get('Produto')),
                     'resolve' => function ($pedido, $args) {
                         $qb = new QueryBuilder($this->db);

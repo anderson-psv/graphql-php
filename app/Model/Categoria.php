@@ -9,6 +9,7 @@ use App\graphql\TypeRegistry;
 use Doctrine\DBAL\Connection;
 use GraphQL\Type\Definition\Type;
 use Doctrine\DBAL\Query\QueryBuilder;
+use GraphQL\Type\Definition\InputObjectType;
 
 class Categoria implements iModel
 {
@@ -230,11 +231,10 @@ class Categoria implements iModel
      * @param TypeRegistry $type_reg
      * @return array
      */
-    static public function getQueryes(TypeRegistry $type_reg)
+    static public function getQueryes(TypeRegistry &$type_reg)
     {
         return [
             'categorias' => [
-                'type'    => Type::listOf($type_reg->get('Categoria')),
                 'resolve' => function ($rootValue, $args) use ($type_reg) {
                     $qb = new QueryBuilder($type_reg->getDb());
 
@@ -244,12 +244,32 @@ class Categoria implements iModel
                 }
             ],
             'categoria' => [
-                'type' => $type_reg->get('Categoria'),
-                'args' => [
-                    'idcategoria' => Type::nonNull(Type::int())
-                ],
                 'resolve' => function ($rootValue, $args) use ($type_reg) {
                     return (new Categoria())->getCategoriaDb($args['idcategoria']);
+                }
+            ]
+        ];
+    }
+
+    static public function getMutations(TypeRegistry $type_reg)
+    {
+        return [
+            'addCategoria' => [
+                'type' => $type_reg->all_types['Categoria'],
+                'args' => [
+                    'inputs' => new InputObjectType([
+                        'name' => 'Inputs',
+                        'fields' => [
+                            'idcategoria'     => Type::int(),
+                            'idcategoria_pai' => Type::int(),
+                            'descricao'       => Type::string(),
+                        ]
+                    ])
+                ],
+                'resolve' => function($calc, $args) use ($type_reg) {
+                    $qb = new QueryBuilder($type_reg->getDb());
+
+                    #$qb->update(self::$table)
                 }
             ]
         ];

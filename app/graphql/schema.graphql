@@ -1,14 +1,25 @@
+
 schema {
   query: Query
 }
 
-type Produto {
-    idproduto: Int
-    descricao: String
-    idcategoria: Int
+type Query {
+  produto(idproduto: Int!): Produto
+  #produtos: [Produto]
+  #categoria(idcategoria: Int!): Categoria
+  #categorias: [Categoria]
 }
 
-type Query {
-    produtos: [Produto]
-    produto(id: Int!): Produto
+type Produto {
+  idproduto: Int
+  descricao: String
+  idcategoria: Int,
+  categoria: Categoria
+}
+
+type Categoria {
+  idcategoria: Int
+  descricao: String
+  idcategoria_pai: Int,
+  produtos: [Produto]
 }

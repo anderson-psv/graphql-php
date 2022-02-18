@@ -177,6 +177,7 @@ class Pedido implements iModel
 
     static public function getQueryes(TypeRegistry $type_reg)
     {
+        return [];
         return [
             'pedidos' => [
                 'type'    => Type::listOf($type_reg->get('Pedido')),
